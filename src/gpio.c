@@ -1,6 +1,5 @@
 #include "gpio.h"
-
-#include <stdint.h>
+#include "mmio.h"
 
 /* BCM2711's legacy 0x7e200000 bus address in low-peripheral ARM mapping. */
 #define GPIO_BASE ((uintptr_t)0xfe200000)
@@ -15,12 +14,11 @@ void gpio_set_output(unsigned int pin)
 
     uintptr_t address = GPIO_BASE + (pin / 10) * 4;
     unsigned int shift = (pin % 10) * 3;
-    volatile uint32_t *select = (volatile uint32_t *)address;
-    uint32_t value = *select;
+    uint32_t value = mmio_read32(address);
 
     /* Each pin owns three bits; other pins may already have a function. */
     value = (value & ~(UINT32_C(7) << shift)) | (UINT32_C(1) << shift);
-    *select = value;
+    mmio_write32(address, value);
 }
 
 void gpio_write(unsigned int pin, bool high)
@@ -30,6 +28,5 @@ void gpio_write(unsigned int pin, bool high)
     }
 
     /* SET/CLR are write-one registers, never read-modify-write targets. */
-    volatile uint32_t *reg = (volatile uint32_t *)(high ? GPSET0 : GPCLR0);
-    *reg = UINT32_C(1) << pin;
+    mmio_write32(high ? GPSET0 : GPCLR0, UINT32_C(1) << pin);
 }
