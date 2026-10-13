@@ -8,7 +8,7 @@ CFLAGS := $(TARGET_FLAGS) -std=c11 -O2 -Wall -Wextra -Werror \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -Iinclude
 ASFLAGS := $(TARGET_FLAGS)
 LDFLAGS := -T linker.ld --build-id=none -z max-page-size=0x1000
-OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o
+OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o build/src/timer.o
 DEPS := $(OBJECTS:.o=.d)
 
 .PHONY: all clean

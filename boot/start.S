@@ -7,6 +7,11 @@ _start:
     and x0, x0, #0xff
     cbnz x0, .Lpark
 
+    // The standard Pi 4 AArch64 firmware stub hands over in nonsecure EL2.
+    mrs x0, CurrentEL
+    cmp x0, #0x8
+    b.ne .Lpark
+
     // Use the current exception level's stack, with AAPCS64's 16-byte alignment.
     msr spsel, #1
     ldr x0, =__stack_top
