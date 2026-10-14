@@ -1,14 +1,5 @@
 #include "gpio.h"
-
-#include <stdint.h>
-
-static void delay(void)
-{
-    /* A visible first experiment, not a calibrated time interval. */
-    for (uint32_t i = 0; i < 10000000; ++i) {
-        __asm__ volatile("nop");
-    }
-}
+#include "timer.h"
 
 void kernel_main(void)
 {
@@ -16,10 +7,17 @@ void kernel_main(void)
     gpio_write(led, false);
     gpio_set_output(led);
 
+    if (!timer_init()) {
+        /* Missing firmware frequency metadata: leave the LED low. */
+        for (;;) {
+            __asm__ volatile("wfe");
+        }
+    }
+
     for (;;) {
         gpio_write(led, true);
-        delay();
+        timer_delay_ms(500);
         gpio_write(led, false);
-        delay();
+        timer_delay_ms(500);
     }
 }

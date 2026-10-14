@@ -2,8 +2,9 @@
 
 A small AArch64 bare-metal program for the Raspberry Pi 4 Model B
 (BCM2711, Cortex-A72). Startup parks secondary cores, sets up a stack,
-clears BSS and enters C. The kernel toggles GPIO17 using an approximate
-counted delay; its duration depends on CPU execution speed.
+clears BSS and enters C. The kernel toggles GPIO17 using the ARM generic
+counter: 500 ms on, then 500 ms off. It reads firmware's frequency metadata
+from `CNTFRQ_EL0` instead of assuming a CPU clock rate.
 
 Build with Clang, LLD, LLVM binary utilities and Make:
 

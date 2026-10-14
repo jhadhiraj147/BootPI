@@ -1,7 +1,13 @@
 #include "timer.h"
+#include "timer_math.h"
 
-/* The architectural counter implements at least 56 bits. */
-#define COUNTER_MASK ((UINT64_C(1) << 56) - 1)
+static uint32_t counter_frequency;
+
+bool timer_init(void)
+{
+    counter_frequency = timer_frequency_hz();
+    return counter_frequency != 0;
+}
 
 uint32_t timer_frequency_hz(void)
 {
@@ -20,5 +26,20 @@ uint64_t timer_counter(void)
 
 uint64_t timer_elapsed_ticks(uint64_t start)
 {
-    return (timer_counter() - start) & COUNTER_MASK;
+    return elapsed_ticks(start, timer_counter());
+}
+
+void timer_delay_ms(uint32_t milliseconds)
+{
+    uint64_t ticks = ticks_for_ms(counter_frequency, milliseconds);
+    if (ticks == 0) {
+        return;
+    }
+
+    /* Complete the GPIO write before starting its measured hold interval. */
+    __asm__ volatile("dsb sy" ::: "memory");
+    uint64_t start = timer_counter();
+    while (timer_elapsed_ticks(start) < ticks) {
+        __asm__ volatile("yield");
+    }
 }
