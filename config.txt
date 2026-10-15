@@ -1,0 +1,7 @@
+[pi4]
+arm_64bit=1
+kernel=kernel8.img
+# Match linker.ld explicitly instead of relying on a firmware default.
+kernel_address=0x80000
+# Use the ARM low peripheral mapping, including GPIO at 0xFE200000.
+arm_peri_high=0
