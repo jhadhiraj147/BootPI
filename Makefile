@@ -1,6 +1,8 @@
 CC := clang
 LD := ld.lld
 OBJCOPY := llvm-objcopy
+HOSTCC := clang
+HOSTCFLAGS := -std=c11 -O2 -Wall -Wextra -Werror
 
 TARGET_FLAGS := --target=aarch64-none-elf -mcpu=cortex-a72 -mgeneral-regs-only
 CFLAGS := $(TARGET_FLAGS) -std=c11 -O2 -Wall -Wextra -Werror \
@@ -11,7 +13,7 @@ LDFLAGS := -T linker.ld --build-id=none -z max-page-size=0x1000
 OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o build/src/timer.o
 DEPS := $(OBJECTS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all clean check
 all: kernel8.img
 
 kernel8.img: build/kernel8.elf
@@ -27,6 +29,13 @@ build/%.o: %.c
 build/%.o: %.S
 	@mkdir -p $(@D)
 	$(CC) $(ASFLAGS) -MMD -MP -c $< -o $@
+
+build/tests/gpio_test: tests/gpio_test.c tests/fakes/mmio.h src/gpio.c include/gpio.h
+	@mkdir -p $(@D)
+	$(HOSTCC) $(HOSTCFLAGS) -Itests/fakes -Iinclude tests/gpio_test.c src/gpio.c -o $@
+
+check: all build/tests/gpio_test
+	./build/tests/gpio_test
 
 clean:
 	rm -rf build kernel8.img
