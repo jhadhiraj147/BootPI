@@ -34,8 +34,13 @@ build/tests/gpio_test: tests/gpio_test.c tests/fakes/mmio.h src/gpio.c include/g
 	@mkdir -p $(@D)
 	$(HOSTCC) $(HOSTCFLAGS) -Itests/fakes -Iinclude tests/gpio_test.c src/gpio.c -o $@
 
-check: all build/tests/gpio_test
+build/tests/timer_test: tests/timer_test.c src/timer_math.h
+	@mkdir -p $(@D)
+	$(HOSTCC) $(HOSTCFLAGS) -Isrc $< -o $@
+
+check: all build/tests/gpio_test build/tests/timer_test
 	./build/tests/gpio_test
+	./build/tests/timer_test
 
 clean:
 	rm -rf build kernel8.img
