@@ -1,6 +1,8 @@
 CC := clang
 LD := ld.lld
 OBJCOPY := llvm-objcopy
+READELF := llvm-readelf
+OBJDUMP := llvm-objdump
 HOSTCC := clang
 HOSTCFLAGS := -std=c11 -O2 -Wall -Wextra -Werror
 
@@ -13,7 +15,7 @@ LDFLAGS := -T linker.ld --build-id=none -z max-page-size=0x1000
 OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o build/src/timer.o
 DEPS := $(OBJECTS:.o=.d)
 
-.PHONY: all clean check
+.PHONY: all clean check inspect disasm
 all: kernel8.img
 
 kernel8.img: build/kernel8.elf
@@ -41,6 +43,13 @@ build/tests/timer_test: tests/timer_test.c src/timer_math.h
 check: all build/tests/gpio_test build/tests/timer_test
 	./build/tests/gpio_test
 	./build/tests/timer_test
+
+inspect: build/kernel8.elf
+	$(READELF) --file-header --program-headers --sections --symbols $<
+
+disasm: build/kernel8.elf
+	$(OBJDUMP) --disassemble $< > build/kernel8.dis
+	@cat build/kernel8.dis
 
 clean:
 	rm -rf build kernel8.img
