@@ -5,6 +5,7 @@ READELF := llvm-readelf
 OBJDUMP := llvm-objdump
 HOSTCC := clang
 HOSTCFLAGS := -std=c11 -O2 -Wall -Wextra -Werror
+PYTHON := python3
 
 TARGET_FLAGS := --target=aarch64-none-elf -mcpu=cortex-a72 -mgeneral-regs-only
 CFLAGS := $(TARGET_FLAGS) -std=c11 -O2 -Wall -Wextra -Werror \
@@ -13,7 +14,7 @@ CFLAGS := $(TARGET_FLAGS) -std=c11 -O2 -Wall -Wextra -Werror \
 ASFLAGS := $(TARGET_FLAGS)
 LDFLAGS := -T linker.ld --build-id=none -z max-page-size=0x1000
 OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o build/src/timer.o
-DEPS := $(OBJECTS:.o=.d)
+DEPS := $(OBJECTS:.o=.d) build/tests/layout.d
 
 .PHONY: all clean check inspect disasm
 all: kernel8.img
@@ -40,9 +41,17 @@ build/tests/timer_test: tests/timer_test.c src/timer_math.h
 	@mkdir -p $(@D)
 	$(HOSTCC) $(HOSTCFLAGS) -Isrc $< -o $@
 
-check: all build/tests/gpio_test build/tests/timer_test
+build/tests/layout.elf: build/boot/start.o build/tests/layout.o linker.ld
+	$(LD) $(LDFLAGS) build/boot/start.o build/tests/layout.o -o $@
+
+build/tests/layout.img: build/tests/layout.elf
+	$(OBJCOPY) -O binary $< $@
+
+check: all build/tests/gpio_test build/tests/timer_test build/tests/layout.img
 	./build/tests/gpio_test
 	./build/tests/timer_test
+	$(PYTHON) scripts/check_elf.py build/kernel8.elf kernel8.img config.txt
+	$(PYTHON) scripts/check_elf.py build/tests/layout.elf build/tests/layout.img config.txt
 
 inspect: build/kernel8.elf
 	$(READELF) --file-header --program-headers --sections --symbols $<

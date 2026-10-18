@@ -42,4 +42,12 @@ SECTIONS
 
     __memory_end = .;
     /DISCARD/ : { *(.comment .note* .eh_frame* .llvm_addrsig) }
+
+    ASSERT(_start == __image_start, "startup must be the first image bytes")
+    ASSERT((__bss_start % 8) == 0 && (__bss_end % 8) == 0,
+           "BSS must support startup's eight-byte stores")
+    ASSERT(__image_end <= __bss_start, "image overlaps BSS")
+    ASSERT(__bss_end <= __stack_bottom, "BSS overlaps the stack")
+    ASSERT((__stack_top % 16) == 0, "C stack must be 16-byte aligned")
+    ASSERT(__stack_top - __stack_bottom == 16K, "stack reservation changed")
 }
