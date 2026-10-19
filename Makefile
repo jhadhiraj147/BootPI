@@ -17,34 +17,35 @@ OBJECTS := build/boot/start.o build/src/kernel.o build/src/gpio.o build/src/time
 DEPS := $(OBJECTS:.o=.d) build/tests/layout.d
 
 .PHONY: all clean check inspect disasm
+.DELETE_ON_ERROR:
 all: kernel8.img
 
-kernel8.img: build/kernel8.elf
+kernel8.img: build/kernel8.elf Makefile
 	$(OBJCOPY) -O binary $< $@
 
-build/kernel8.elf: $(OBJECTS) linker.ld
+build/kernel8.elf: $(OBJECTS) linker.ld Makefile
 	$(LD) $(LDFLAGS) -Map=build/kernel8.map $(OBJECTS) -o $@
 
-build/%.o: %.c
+build/%.o: %.c Makefile
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-build/%.o: %.S
+build/%.o: %.S Makefile
 	@mkdir -p $(@D)
 	$(CC) $(ASFLAGS) -MMD -MP -c $< -o $@
 
-build/tests/gpio_test: tests/gpio_test.c tests/fakes/mmio.h src/gpio.c include/gpio.h
+build/tests/gpio_test: tests/gpio_test.c tests/fakes/mmio.h src/gpio.c include/gpio.h Makefile
 	@mkdir -p $(@D)
 	$(HOSTCC) $(HOSTCFLAGS) -Itests/fakes -Iinclude tests/gpio_test.c src/gpio.c -o $@
 
-build/tests/timer_test: tests/timer_test.c src/timer_math.h
+build/tests/timer_test: tests/timer_test.c src/timer_math.h Makefile
 	@mkdir -p $(@D)
 	$(HOSTCC) $(HOSTCFLAGS) -Isrc $< -o $@
 
-build/tests/layout.elf: build/boot/start.o build/tests/layout.o linker.ld
+build/tests/layout.elf: build/boot/start.o build/tests/layout.o linker.ld Makefile
 	$(LD) $(LDFLAGS) build/boot/start.o build/tests/layout.o -o $@
 
-build/tests/layout.img: build/tests/layout.elf
+build/tests/layout.img: build/tests/layout.elf Makefile
 	$(OBJCOPY) -O binary $< $@
 
 check: all build/tests/gpio_test build/tests/timer_test build/tests/layout.img
