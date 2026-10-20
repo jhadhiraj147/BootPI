@@ -8,7 +8,7 @@ bool timer_init(void);
 uint32_t timer_frequency_hz(void);
 uint64_t timer_counter(void);
 uint64_t timer_elapsed_ticks(uint64_t start);
-/* Call after successful timer_init(); completes preceding device writes. */
+/* Call after successful timer_init(); nonzero delays complete device writes. */
 void timer_delay_ms(uint32_t milliseconds);
 
 #endif
